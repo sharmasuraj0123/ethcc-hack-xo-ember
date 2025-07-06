@@ -28,7 +28,6 @@ agent2 = Agent(
 # Initialize the chat protocol
 chat_proto = Protocol(spec=chat_protocol_spec)
 XO_AGENT_URL = os.getenv("XO_AGENT_URL")
-user_id = "test-agent-uagent-12345"
 
 # Startup Handler - Print agent details
 @agent2.on_event("startup")

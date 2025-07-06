@@ -47,29 +47,10 @@ llm = ChatGroq(model="gemma2-9b-it", temperature=0)
 # -----------------------------
 # Orchestrator Node
 # -----------------------------
+with open("orchestrator_prompt.txt", "r") as f:
+    orchestrator_system_prompt = f.read()
 orchestrator_prompt = ChatPromptTemplate.from_messages([
-    ("system",
-     "You are an intelligent routing assistant inside a Scope of Work (SOW) generation agent. "
-     "Your job is to decide which node should handle the user's next message.\n\n"
-
-     "The graph has 4 main nodes:\n"
-     "- 'sow_node': Use this when the user is clearly describing a project, listing features, suggesting revisions, or providing new technical requirements for a Scope of Work.\n"
-     "- 'approval_check': Use this when the user indicates approval, satisfaction, or readiness to proceed. This can be explicit (e.g., 'I approve', 'Looks good', 'This works', 'Great', 'Proceed') "
-     "or implicit (e.g., 'Alright', 'Perfect', 'Cool', 'Nice'). If a valid SOW draft already exists, treat these phrases as approval signals.\n"
-     "- 'general_query_node': Use this when the user is asking general knowledge questions (e.g., 'What is an SOW?', 'What are typical timelines?'), or when the input is vague, off-topic, or a greeting (e.g., 'Hello', 'Hey', 'Can you help?', 'Are you there?').\n\n"
-     "- 'xo_coder': Use this when the user mentions code generation, Coder, creating or deploying websites/apps, or similar tasks like 'create a dashboard', 'build a site', 'generate code'.\n\n"
-
-     "Only respond with EXACTLY ONE of:\n"
-     "- sow_node\n"
-     "- approval_check\n"
-     "- general_query_node\n"
-     "- xo_coder"
-     
-     "IMPORTANT:\n"
-     "- DO NOT route to 'sow_node' if the message is vague or unclear.\n"
-     "- DO NOT guess technical intent from short inputs like 'Ok', 'Yup', or 'Hey'. Use context and history.\n"
-     "- If you're unsure or the message looks like a greeting or generic question, default to 'general_query_node'.\n\n"
-    ),
+    ("system", orchestrator_system_prompt),
     ("human",
      "User message: {input}\n\n"
      "Current status: {status}\n\n"
@@ -95,8 +76,10 @@ def orchestrator_node(state: SOWState) -> SOWState:
 # -----------------------------
 # SOW Drafting Node
 # -----------------------------
+with open("sow_prompt.txt", "r") as f:
+    sow_system_prompt = f.read()
 sow_prompt = ChatPromptTemplate.from_messages([
-    ("system", "You are a helpful assistant that writes or updates a professional SOW."),
+    ("system", sow_system_prompt),
     ("human", "{history}\n\nUser input: {input}\n\nCurrent SOW: {sow_draft}")
 ])
 
@@ -134,13 +117,10 @@ def sow_node(state: SOWState) -> SOWState:
 # -----------------------------
 # Approval Check Node
 # -----------------------------
+with open("approval_prompt.txt", "r") as f:
+    approval_system_prompt = f.read()
 approval_prompt = ChatPromptTemplate.from_messages([
-    ("system",
-     "You are an approval-checking assistant for a Scope of Work (SOW) generator.\n"
-     "Your job is to decide if the user has approved the final version of the SOW.\n"
-     "Approval might be expressed with phrases like: 'Looks good', 'Perfect', 'Finalize it', 'Ready', 'this works', etc.\n"
-     "If the user is still asking for changes or expressing doubts, it's not approved.\n"
-     "You must respond with only 'yes' or 'no'."),
+    ("system", approval_system_prompt),
     ("human",
      "User message: {input}\n\nRecent history:\n{history}")])
 
@@ -174,17 +154,10 @@ def approval_check_node(state: SOWState) -> SOWState:
 # -----------------------------
 # Claude code Node
 # -----------------------------
+with open("claude_prompt.txt", "r") as f:
+    claude_system_prompt = f.read()
 claude_prompt_template = ChatPromptTemplate.from_messages([
-    ("system",
-     "You are a developer assistant. Your task is to generate a clear, natural-sounding prompt to send to Claude for code generation.\n\n"
-     "Base this prompt entirely on the provided Scope of Work and any additional user instructions.\n\n"
-     "The final prompt should:\n"
-     "- Be written naturally, like a human request.\n"
-     "- Clearly define what needs to be built or done.\n"
-     "- Include goals, frameworks, or components if mentioned.\n"
-     "- Avoid unnecessary repetition or verbose explanations.\n"
-     "- Stay within 100 to 160 words total.\n\n"
-     "Focus on clarity, specificity, and brevity to help Claude generate precise code."),
+    ("system", claude_system_prompt),
     ("human", "Scope of Work: {input}")
 ])
 
@@ -241,21 +214,10 @@ def xo_coder_node(state: SOWState) -> SOWState:
 # -----------------------------
 # General Query Node
 # -----------------------------
+with open("xo_context_prompt.txt", "r") as f:
+    xo_context_system_prompt = f.read()
 xo_context_prompt = ChatPromptTemplate.from_messages([
-    ("system", 
-     "You are an AI assistant inside XO, an AI-powered software platform based in New York.\n\n"
-     "About XO:\n"
-     "- Mission: Build smarter. Launch faster. Stay ahead.\n"
-     "- XO eliminates the chaos of AI/Web3 software development by orchestrating a swarm of agents.\n"
-     "- Agents handle UI/UX, backend, DevOps, blockchain, etc., all from a single prompt.\n"
-     "- Products include MVP builders, no-code tools, founder agents, and blockchain modules.\n"
-     "- Typical users: founders, enterprises, developers.\n"
-     "- Access: xo.builders | demo.xo.builders | LinkedIn demos\n"
-     "- Team: Suraj Sharma (ex-Microsoft), Yash Sanghvi (ex-BlackRock)\n"
-     "- Competitive Edge: Full-stack agentic workflows, not snippet-based responses.\n"
-     "- Example claims: MVPs live in hours, 70–80% workflow acceleration, $30K–90K/year savings.\n\n"
-     "Answer general questions about XO or related topics clearly and concisely. If the question is not about XO, still respond helpfully."
-    ),
+    ("system", xo_context_system_prompt),
     ("human","{history}\n\n{input}")])
 
 def general_query_node(state: SOWState) -> SOWState:
