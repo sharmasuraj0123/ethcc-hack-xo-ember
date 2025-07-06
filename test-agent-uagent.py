@@ -21,6 +21,8 @@ agent2 = Agent(
     seed="test-agent-uagent1234",
     mailbox=True,
     publish_agent_details=True,
+    readme_path="README.md"
+
 )
 
 # Initialize the chat protocol

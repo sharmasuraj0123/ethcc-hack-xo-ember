@@ -1,0 +1,1 @@
+This is XO digital organization that is fully autonomous
